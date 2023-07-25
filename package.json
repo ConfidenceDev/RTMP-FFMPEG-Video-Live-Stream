@@ -1,0 +1,23 @@
+{
+  "name": "rtmp-ffmpeg-video-live-stream",
+  "version": "1.0.0",
+  "description": "Building a Video Live Streaming Service for Event Creators",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "keywords": [],
+  "author": "ConfidenceDev <confidostic3@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "fluent-ffmpeg": "^2.1.2",
+    "socket.io": "^4.6.1",
+    "stream": "^0.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

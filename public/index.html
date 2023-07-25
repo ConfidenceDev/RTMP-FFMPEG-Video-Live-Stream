@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      video {
+        max-width: 100%;
+        width: 320px;
+      }
+
+      button {
+        margin: 0 3px 10px 0;
+        width: 99px;
+        padding-left: 2px;
+        padding-right: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <h1>Media Source</h1>
+      <video id="localVideo" autoplay muted></video>
+      <video id="remoteVideo" autoplay muted></video>
+      <div>
+        <button id="streamingBtn">Start Streaming</button>
+      </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+
+      const mediaSource = new MediaSource();
+      const callbackQueue = [];
+      let sourceBuffer;
+      let mediaRecorder;
+      let duration;
+      let isMediaInit = false;
+
+      const localVideo = document.querySelector("video#localVideo");
+      const remoteVideo = document.querySelector("video#remoteVideo");
+      const streamingBtn = document.querySelector("button#streamingBtn");
+      streamingBtn.onclick = toggleStreaming;
+
+      navigator.getUserMedia =
+        navigator.getUserMedia ||
+        navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia ||
+        navigator.mediaDevices.getUserMedia;
+
+      const constraints = {
+        audio: true,
+        video: true,
+      };
+
+      navigator.getUserMedia(constraints, successCallback, errorCallback);
+
+      function toggleStreaming() {
+        if (streamingBtn.textContent === "Start Streaming") startStreaming();
+        else stopStreaming();
+      }
+
+      // ========================= Stream =========================
+
+      function eventTest(event) {
+        console.log("event Test", event);
+      }
+
+      function successCallback(stream) {
+        stream.inactive = eventTest;
+        window.stream = stream;
+        localVideo.srcObject = stream;
+      }
+
+      function errorCallback(error) {
+        console.log("navigator.getUserMedia error: ", error);
+      }
+
+      function startStreaming() {
+        const options = { mimeType: 'video/webm; codecs="vp8, opus"' };
+        try {
+          mediaRecorder = new MediaRecorder(window.stream, options);
+        } catch (e0) {
+          console.log(
+            "Unable to create MediaRecorder with options Object: ",
+            e0
+          );
+          try {
+            options = {
+              mimeType: "video/webm,codecs=vp8",
+              bitsPerSecond: 100000,
+            };
+            mediaRecorder = new MediaRecorder(window.stream, options);
+          } catch (e1) {
+            console.log(
+              "Unable to create MediaRecorder with options Object: ",
+              e1
+            );
+            try {
+              options = "video/vp8"; // Chrome 47
+              mediaRecorder = new MediaRecorder(window.stream, options);
+            } catch (e2) {
+              alert(
+                "MediaRecorder is not supported by this browser.\n\n" +
+                  "Try Firefox 29 or later, or Chrome 47 or later, with Enable experimental Web Platform features enabled from chrome://flags."
+              );
+              console.error("Exception while creating MediaRecorder:", e2);
+              return;
+            }
+          }
+        }
+        console.log(
+          "Created MediaRecorder",
+          mediaRecorder,
+          "with options",
+          options
+        );
+        streamingBtn.textContent = "Stop Streaming";
+        mediaRecorder.ondataavailable = handleDataAvailable;
+        mediaRecorder.start(1000); // time slice 1s
+        mediaRecorder.onstop = handleStop;
+        console.log("MediaRecorder started", mediaRecorder);
+      }
+
+      function handleDataAvailable(event) {
+        if (event.data && event.data.size > 0) {
+          socket.emit("blob", event.data);
+        }
+      }
+
+      function stopStreaming() {
+        mediaRecorder.stop();
+        //socket.disconnect();
+        streamingBtn.textContent = "Start Streaming";
+      }
+      function handleStop(event) {
+        socket.emit("endStream", null);
+      }
+    </script>
+  </body>
+</html>
