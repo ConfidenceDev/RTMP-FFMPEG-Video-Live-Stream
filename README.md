@@ -61,5 +61,5 @@ docker build -t <image-name> .
 2. Start container:
 
 ```
-- docker run -p 5000:5000 -d --name <container-name> <image-name>:latest
+docker run -p 5000:5000 -d --name <container-name> <image-name>:latest
 ```
