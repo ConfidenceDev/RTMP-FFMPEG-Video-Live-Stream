@@ -13,6 +13,8 @@ const io = require("socket.io")(server, {
 });
 const cloudinary = require("cloudinary").v2;
 
+//Cloudinary configuration: https://cloudinary.com/
+//Comment out code if you don't want cloud storage
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.API_KEY,
@@ -56,6 +58,7 @@ io.on("connection", (socket) => {
     videoFrames.length = 0;
 
     // Save stream to cloudinary
+    // Comment out code if you don't want cloud storage
     cloudinary.uploader
       .upload(tempFilePath, {
         resource_type: "video",
@@ -65,7 +68,7 @@ io.on("connection", (socket) => {
       .then((result) => {
         console.log(result);
 
-        // Remove stream from video folder after storage
+        // Remove stream from local video folder after cloud storage
         fs.unlinkSync(tempFilePath);
       })
       .catch((err) => {
