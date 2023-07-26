@@ -24,6 +24,12 @@ ffmpeg -version
 npm install
 ```
 
+- Start
+
+```
+npm run start
+```
+
 - Add your cloudinary config to store video after stream to storage or comment out code
 
 ```
