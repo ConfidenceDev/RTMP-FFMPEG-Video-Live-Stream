@@ -1,3 +1,4 @@
+require("dotenv/config");
 const path = require("path");
 const fs = require("fs");
 const express = require("express");
@@ -10,10 +11,18 @@ const io = require("socket.io")(server, {
     origin: "*",
   },
 });
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+});
 
 const PORT = process.env.PORT || 5000;
-//const rtmpUrl = "rtmp://localhost/live/stream";
-const rtmpUrl = "rtmp://172.17.0.3:1935/live/stream";
+// RTMP Stream URL
+const rtmpUrl = "rtmp://localhost/live/stream";
+//const rtmpUrl = "rtmp://172.17.0.3:1935/live/stream";
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "./public/index.html"));
@@ -30,7 +39,6 @@ io.on("connection", (socket) => {
   console.log("Client connected");
 
   socket.on("blob", async (frameData) => {
-    //console.log(frameData);
     videoFrames.push(frameData);
     videoStream.push(frameData);
     if (!processing) {
@@ -42,13 +50,27 @@ io.on("connection", (socket) => {
   socket.on("endStream", () => {
     const currentTime = Date.now();
     const videoBuffer = Buffer.concat(videoFrames);
-    const tempFilePath = `./videos/video_${currentTime}.mp4`;
+    const streamName = `video_${currentTime}`;
+    const tempFilePath = `./videos/${streamName}.mp4`;
     fs.writeFileSync(tempFilePath, videoBuffer);
     videoFrames.length = 0;
 
-    /*setTimeout(() => {
-      fs.unlinkSync(tempFilePath);
-    }, 4000);*/
+    // Save stream to cloudinary
+    cloudinary.uploader
+      .upload(tempFilePath, {
+        resource_type: "video",
+        public_id: `streams/${streamName}`,
+        chunk_size: 6000000,
+      })
+      .then((result) => {
+        console.log(result);
+
+        // Remove stream from video folder after storage
+        fs.unlinkSync(tempFilePath);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   });
 });
 

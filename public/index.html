@@ -23,7 +23,6 @@
     <div id="container">
       <h1>Media Source</h1>
       <video id="localVideo" autoplay muted></video>
-      <video id="remoteVideo" autoplay muted></video>
       <div>
         <button id="streamingBtn">Start Streaming</button>
       </div>
@@ -40,7 +39,6 @@
       let isMediaInit = false;
 
       const localVideo = document.querySelector("video#localVideo");
-      const remoteVideo = document.querySelector("video#remoteVideo");
       const streamingBtn = document.querySelector("button#streamingBtn");
       streamingBtn.onclick = toggleStreaming;
 
